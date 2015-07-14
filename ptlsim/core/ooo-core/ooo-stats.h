@@ -494,11 +494,13 @@ namespace OOO_CORE_MODEL {
             {
                 StatObj<W64> hits;
                 StatObj<W64> misses;
+				StatObj<W64> pagefault;
 
                 tlb_stat(const char *name, Statable *parent)
                     : Statable(name, parent)
                       , hits("hits", this)
                       , misses("misses", this)
+					  , pagefault("pagefault", this)
                 {}
             };
 

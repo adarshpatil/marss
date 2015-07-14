@@ -1798,6 +1798,7 @@ int ReorderBufferEntry::commit() {
             /* Capture the faulting virtual address for page faults */
             if ((ctx.exception == EXCEPTION_PageFaultOnRead) |
                     (ctx.exception == EXCEPTION_PageFaultOnWrite)) {
+				thread.thread_stats.dcache.itlb.pagefault++;
                 ctx.page_fault_addr = subrob.origvirt;
             }
 
