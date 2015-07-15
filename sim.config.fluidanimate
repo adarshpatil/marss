@@ -1,0 +1,12 @@
+ # Sample Marss simconfig file
+-machine xeon_multi_core
+ 
+ # Logging options
+-logfile results/pagefault/4core-fluidanimate-large.log
+-loglevel 4
+
+ # Start logging after 10million cycles
+#-startlog 10m
+ 
+ # Stats file
+-stats results/pagefault/4core-fluidanimate-large.stats

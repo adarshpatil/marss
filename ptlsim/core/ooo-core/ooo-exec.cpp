@@ -1918,7 +1918,6 @@ bool ReorderBufferEntry::probetlb(LoadStoreQueueEntry& state, Waddr& origaddr, W
 #endif
 
     if unlikely (exception) {
-		thread.thread_stats.dcache.dtlb.pagefault++;
 
         /* Check if the page fault can be handled without causing exception */
         if(exception == EXCEPTION_PageFaultOnWrite || exception == EXCEPTION_PageFaultOnRead) {
@@ -2012,6 +2011,9 @@ rob_cont:
                 mmio, pfec);
 
         if unlikely (exception) {
+
+			thread.thread_stats.dcache.dtlb.pagefault++;
+
             /* Check if the page fault can be handled without causing exception */
             if(exception == EXCEPTION_PageFaultOnWrite || exception == EXCEPTION_PageFaultOnRead) {
                 handled = thread.ctx.try_handle_fault(virtaddr, st);
