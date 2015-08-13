@@ -72,11 +72,11 @@
 #endif
 
 #ifndef OOO_ITLB_SIZE
-#define OOO_ITLB_SIZE 32
+#define OOO_ITLB_SIZE 64
 #endif
 
 #ifndef OOO_DTLB_SIZE
-#define OOO_DTLB_SIZE 32
+#define OOO_DTLB_SIZE 64
 #endif
 
 /* functional units */
