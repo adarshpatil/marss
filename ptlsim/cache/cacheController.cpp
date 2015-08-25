@@ -639,6 +639,13 @@ bool CacheController::cache_access_cb(void *arg)
 					N_STAT_UPDATE(new_stats.cpurequest.count.miss.write, ++,
 							kernel_req);
 				}
+        if(queueEntry->request->is_tlbhit()){
+          N_STAT_UPDATE(new_stats.cpurequest.count.miss.tlbhit, ++,
+              kernel_req);
+        } else {
+            N_STAT_UPDATE(new_stats.cpurequest.count.miss.tlbmiss, ++,
+              kernel_req);
+          }
 
 				if(!queueEntry->prefetch && type == MEMORY_OP_READ)
 					do_prefetch(queueEntry->request);
