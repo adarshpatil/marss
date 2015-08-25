@@ -65,11 +65,15 @@ struct BaseCacheStats : public Statable
                 {
                     StatObj<W64> hit;
                     StatObj<W64> forward;
+                    StatObj<W64> tlbmiss;
+                    StatObj<W64> tlbhit;
 
                     hit_sub(const char *name, Statable *parent)
                         : Statable(name, parent)
                           , hit("hit", this)
                           , forward("forward", this)
+                          , tlbmiss("tlbmiss", this)
+                          , tlbhit("tlbhit", this)
                     {}
                 };
 
@@ -87,11 +91,15 @@ struct BaseCacheStats : public Statable
             {
                 StatObj<W64> read;
                 StatObj<W64> write;
+                StatObj<W64> tlbmiss;
+                StatObj<W64> tlbhit;
 
                 miss(Statable *parent)
                     : Statable("miss", parent)
                       , read("read", this)
                       , write("write", this)
+                      , tlbmiss("tlbmiss", this)
+                      , tlbhit("tlbhit", this)
                 {}
             } miss;
 

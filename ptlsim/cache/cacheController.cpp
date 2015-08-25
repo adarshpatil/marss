@@ -100,6 +100,8 @@ CacheController::CacheController(W8 coreid, const char *name,
         type_ = L2_CACHE;
     else if (( strstr(get_name(), "L3") !=NULL) )
         type_ = L3_CACHE;
+    else if (( strstr(get_name(), "L4") !=NULL) )
+        type_ = L4_CACHE;
     else if (( strstr(get_name(), "L1_I") !=NULL) )
         type_ = L1_I_CACHE;
     else if (( strstr(get_name(), "L1_D") !=NULL) )
@@ -211,8 +213,8 @@ bool CacheController::handle_interconnect_cb(void *arg)
 
 		if(queueEntry->request->get_type() == MEMORY_OP_UPDATE &&
 				wt_disabled_ == false) {
-			if(type_ == L2_CACHE || type_ == L3_CACHE) {
-				memdebug("L2/L3 cache update sending to lower\n");
+			if(type_ == L2_CACHE || type_ == L3_CACHE || type_ == L4_CACHE) {
+				memdebug("L2/L3/L4 cache update sending to lower\n");
 				queueEntry->eventFlags[
 					CACHE_WAIT_INTERCONNECT_EVENT]++;
 				queueEntry->sendTo = lowerInterconnect_;
@@ -319,8 +321,8 @@ bool CacheController::handle_interconnect_cb(void *arg)
 
 					newEntry->eventFlags[CACHE_ACCESS_EVENT]++;
 
-					/* if its a L2 cache or L3 cache send to lower memory */
-					if((type_ == L2_CACHE || type_ == L3_CACHE) &&
+					/* if its a L2 cache or L3 cache or L4 cache send to lower memory */
+					if((type_ == L2_CACHE || type_ == L3_CACHE || type_ == L4_CACHE) &&
 								isLowestPrivate_ == false) {
 						memdebug("L2 cache update sending to lower\n");
 						newEntry->eventFlags[
@@ -560,9 +562,26 @@ bool CacheController::cache_access_cb(void *arg)
 				if(type == MEMORY_OP_READ) {
 					N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.hit, ++,
 							kernel_req);
+              
+          if(queueEntry->request->is_tlbhit()){
+            N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.tlbhit,
+              ++, kernel_req);
+          } else {
+            N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.tlbmiss,
+              ++, kernel_req);
+          }
+          
 				} else if(type == MEMORY_OP_WRITE) {
 					N_STAT_UPDATE(new_stats.cpurequest.count.hit.write.hit, ++,
 							kernel_req);
+              
+          if(queueEntry->request->is_tlbhit()){
+            N_STAT_UPDATE(new_stats.cpurequest.count.hit.write.tlbhit,
+              ++, kernel_req);
+          } else {
+            N_STAT_UPDATE(new_stats.cpurequest.count.hit.write.tlbmiss,
+              ++, kernel_req);
+          }
 				}
 
                 /*

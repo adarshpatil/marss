@@ -38,6 +38,7 @@ namespace Memory{
 		L1_D_CACHE,
 		L2_CACHE,
 		L3_CACHE,
+    L4_CACHE,
 		MAIN_MEMORY
 	};
 

@@ -1,4 +1,5 @@
 
+
 /*
  *  PTLsim: Cycle Accurate x86-64 Simulator
  *  Out-of-Order Core Simulator
@@ -1757,7 +1758,7 @@ int ReorderBufferEntry::issueload(LoadStoreQueueEntry& state, Waddr& origaddr, W
     assert(request != NULL);
 
     request->init(core.get_coreid(), threadid, state.physaddr << 3, idx, sim_cycle,
-            false, uop.rip.rip, uop.uuid, Memory::MEMORY_OP_READ);
+            false, uop.rip.rip, uop.uuid, Memory::MEMORY_OP_READ, tlb_hit);
     request->set_coreSignal(&core.dcache_signal);
 
     bool L1hit = core.memoryHierarchy->access_cache(request);
@@ -2012,7 +2013,8 @@ rob_cont:
 
         if unlikely (exception) {
 
-			thread.thread_stats.dcache.dtlb.pagefault++;
+            /*adarsh: pagefault stats*/
+            thread.thread_stats.dcache.dtlb.pagefault++;
 
             /* Check if the page fault can be handled without causing exception */
             if(exception == EXCEPTION_PageFaultOnWrite || exception == EXCEPTION_PageFaultOnRead) {
@@ -2067,7 +2069,7 @@ rob_cont:
     assert(request != NULL);
 
     request->init(core.get_coreid(), threadid, pteaddr, idx, sim_cycle,
-            false, uop.rip.rip, uop.uuid, Memory::MEMORY_OP_READ);
+            false, uop.rip.rip, uop.uuid, Memory::MEMORY_OP_READ, false);
     request->set_coreSignal(&core.dcache_signal);
 
     lsq->physaddr = pteaddr >> 3;

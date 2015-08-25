@@ -137,7 +137,7 @@ itlb_walk_finish:
     assert(request != NULL);
 
     request->init(core.get_coreid(), threadid, pteaddr, 0, sim_cycle,
-            true, 0, 0, Memory::MEMORY_OP_READ);
+            true, 0, 0, Memory::MEMORY_OP_READ, false);
     request->set_coreSignal(&core.icache_signal);
 
     waiting_for_icache_fill_physaddr = floor(pteaddr, ICACHE_FETCH_GRANULARITY);
@@ -503,6 +503,7 @@ bool ThreadContext::fetch() {
 
     int fetchcount = 0;
     int taken_branch_count = 0;
+    bool itlb_hit = true;
 
     if unlikely (stall_frontend) {
         thread_stats.fetch.stop.stalled++;
@@ -573,9 +574,11 @@ bool ThreadContext::fetch() {
         // First probe tlb
         if(!probeitlb(fetchrip)) {
             // Its a itlb miss
+            itlb_hit = false; // adarsh
             itlbwalk();
             break;
         }
+        itlb_hit = true; // adarsh
 
         PageFaultErrorCode pfec;
         int exception = 0;
@@ -600,7 +603,7 @@ bool ThreadContext::fetch() {
             assert(request != NULL);
 
             request->init(core.get_coreid(), threadid, physaddr, 0, sim_cycle,
-                    true, 0, 0, Memory::MEMORY_OP_READ);
+                    true, 0, 0, Memory::MEMORY_OP_READ, itlb_hit);
             request->set_coreSignal(&core.icache_signal);
 
             hit = core.memoryHierarchy->access_cache(request);
@@ -1798,7 +1801,8 @@ int ReorderBufferEntry::commit() {
             /* Capture the faulting virtual address for page faults */
             if ((ctx.exception == EXCEPTION_PageFaultOnRead) |
                     (ctx.exception == EXCEPTION_PageFaultOnWrite)) {
-				thread.thread_stats.dcache.itlb.pagefault++;
+                /* adarsh: itlb pagefault stats */
+                thread.thread_stats.dcache.itlb.pagefault++;
                 ctx.page_fault_addr = subrob.origvirt;
             }
 
@@ -2180,7 +2184,7 @@ int ReorderBufferEntry::commit() {
 
             request->init(core.get_coreid(), threadid, lsq->physaddr << 3, 0,
                     sim_cycle, false, uop.rip.rip, uop.uuid,
-                    Memory::MEMORY_OP_WRITE);
+                    Memory::MEMORY_OP_WRITE, true);
             request->set_coreSignal(&core.dcache_signal);
 
             assert(core.memoryHierarchy->access_cache(request));

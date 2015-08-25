@@ -63,6 +63,7 @@ class MemoryRequest: public selfqueuelink
 			cycles_ = 0;
 			ownerRIP_ = 0;
 			refCounter_ = 0; // or maybe 1
+      isTLBhit_ = 0;
 			opType_ = MEMORY_OP_READ;
 			isData_ = 0;
 			history = new stringbuf();
@@ -85,7 +86,8 @@ class MemoryRequest: public selfqueuelink
 				bool isInstruction,
 				W64 ownerRIP,
 				W64 ownerUUID,
-				OP_TYPE opType);
+				OP_TYPE opType,
+        bool isTLBhit);
 
 		bool is_same(W8 coreid,
 				W8 threadid,
@@ -109,6 +111,11 @@ class MemoryRequest: public selfqueuelink
 			return !isData_;
 		}
 
+    // added by adarsh
+    bool is_tlbhit() {
+      return isTLBhit_;
+    }
+    
 		W64 get_physical_address() { return physicalAddress_; }
 		void set_physical_address(W64 addr) { physicalAddress_ = addr; }
 
@@ -178,6 +185,7 @@ class MemoryRequest: public selfqueuelink
 		W64 ownerUUID_;
 		int refCounter_;
 		OP_TYPE opType_;
+    bool isTLBhit_; // added by adarsh
 		stringbuf *history;
         Signal *coreSignal_;
 

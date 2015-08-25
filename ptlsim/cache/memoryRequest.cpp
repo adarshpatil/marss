@@ -50,7 +50,8 @@ void MemoryRequest::init(W8 coreId,
 		bool isInstruction,
 		W64 ownerRIP,
 		W64 ownerUUID,
-		OP_TYPE opType)
+		OP_TYPE opType,
+    bool isTLBhit)
 {
 	coreId_ = coreId;
 	threadId_ = threadId;
@@ -60,6 +61,7 @@ void MemoryRequest::init(W8 coreId,
 	ownerRIP_ = ownerRIP;
 	ownerUUID_ = ownerUUID;
 	refCounter_ = 0; // or maybe 1
+  isTLBhit_ = isTLBhit; // added by adarsh
 	opType_ = opType;
 	isData_ = !isInstruction;
 

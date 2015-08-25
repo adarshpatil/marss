@@ -1958,7 +1958,7 @@ bool AtomThread::fetch_from_icache()
         assert(request != NULL);
 
         request->init(core.get_coreid(), threadid, physaddr, 0, sim_cycle,
-                true, fetchrip.rip, 0, Memory::MEMORY_OP_READ);
+                true, fetchrip.rip, 0, Memory::MEMORY_OP_READ, true);
         request->set_coreSignal(&icache_signal);
 
         hit = core.memoryHierarchy->access_cache(request);
@@ -2091,7 +2091,7 @@ itlb_walk_finish:
     assert(request != NULL);
 
     request->init(core.get_coreid(), threadid, pteaddr, 0, sim_cycle,
-            true, fetchrip.rip, 0, Memory::MEMORY_OP_READ);
+            true, fetchrip.rip, 0, Memory::MEMORY_OP_READ, false);
     request->set_coreSignal(&icache_signal);
 
     icache_miss_addr = floor(pteaddr, ICACHE_FETCH_GRANULARITY);
@@ -2148,7 +2148,7 @@ dtlb_walk_finish:
     assert(request != NULL);
 
     request->init(core.get_coreid(), threadid, pteaddr, 0, sim_cycle,
-            false, 0, 0, Memory::MEMORY_OP_READ);
+            false, 0, 0, Memory::MEMORY_OP_READ, false);
     request->set_coreSignal(&dcache_signal);
 
     bool L1_hit = core.memoryHierarchy->access_cache(request);
@@ -2377,7 +2377,7 @@ bool AtomThread::access_dcache(Waddr addr, W64 rip, W8 type, W64 uuid)
     assert(request);
 
     request->init(core.get_coreid(), threadid, addr, 0,
-            sim_cycle, false, rip, uuid, (Memory::OP_TYPE)type);
+            sim_cycle, false, rip, uuid, (Memory::OP_TYPE)type, true);
     request->set_coreSignal(&dcache_signal);
 
     st_dcache.accesses++;
