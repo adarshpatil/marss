@@ -27,7 +27,7 @@
 
 #ifndef ENABLE_LOGGING
 #undef logable
-#define logable(level) (0)
+#define logable(level) (1)
 #endif
 
 using namespace OOO_CORE_MODEL;
@@ -109,14 +109,14 @@ void ThreadContext::itlbwalk() {
 
     if unlikely (!itlb_walk_level) {
 itlb_walk_finish:
-        if(logable(6)) {
-            ptl_logfile << "itlbwalk finished for virtaddr: ", (void*)(W64(fetchrip)), endl;
-        }
         itlb_walk_level = 0;
         itlb.insert(fetchrip, threadid);
         int delay = min(sim_cycle - itlb_miss_init_cycle, (W64)1000);
         thread_stats.dcache.itlb_latency[delay]++;
         waiting_for_icache_fill = 0;
+        if(logable(6)) {
+            ptl_logfile << "itlbwalk finished for virtaddr: ", (void*)(W64(fetchrip)), " delay: ", delay, endl;
+        }
         return;
     }
 
@@ -127,23 +127,28 @@ itlb_walk_finish:
         return;
     }
 
-    if(!core.memoryHierarchy->is_cache_available(core.get_coreid(), threadid, true)){
-        /* Cache queue is full.. so simply skip this iteration */
-        itlb_walk_level = 0;
-        return;
-    }
+	/*adarsh - tlb walk free */
+	//W64 data = ctx.loadphys(pteaddr, false, 0);
+	itlb_walk_level--;
+	itlbwalk();
+	
+    //if(!core.memoryHierarchy->is_cache_available(core.get_coreid(), threadid, true)){
+    //    /* Cache queue is full.. so simply skip this iteration */
+    //    itlb_walk_level = 0;
+    //    return;
+    //}
 
-    Memory::MemoryRequest *request = core.memoryHierarchy->get_free_request(core.get_coreid());
-    assert(request != NULL);
+    //Memory::MemoryRequest *request = core.memoryHierarchy->get_free_request(core.get_coreid());
+    //assert(request != NULL);
 
-    request->init(core.get_coreid(), threadid, pteaddr, 0, sim_cycle,
-            true, 0, 0, Memory::MEMORY_OP_READ, false);
-    request->set_coreSignal(&core.icache_signal);
+    //request->init(core.get_coreid(), threadid, pteaddr, 0, sim_cycle,
+    //        true, 0, 0, Memory::MEMORY_OP_READ, false);
+    //request->set_coreSignal(&core.icache_signal);
 
-    waiting_for_icache_fill_physaddr = floor(pteaddr, ICACHE_FETCH_GRANULARITY);
-    waiting_for_icache_fill = 1;
+    //waiting_for_icache_fill_physaddr = floor(pteaddr, ICACHE_FETCH_GRANULARITY);
+    //waiting_for_icache_fill = 1;
 
-    bool buf_hit = core.memoryHierarchy->access_cache(request);
+    //bool buf_hit = core.memoryHierarchy->access_cache(request);
 
      /*
       * We have a small buffer that returns true if the instruction access hits
@@ -151,10 +156,10 @@ itlb_walk_finish:
       * So if we have a buffer hit, we simply reduce the itlb_walk_level and
       * call the itlbwalk recursively.  Hope that this doesn't happen a lot
       */
-    if(buf_hit) {
-        itlb_walk_level--;
-        itlbwalk();
-    }
+    //if(buf_hit) {
+    //    itlb_walk_level--;
+    //    itlbwalk();
+    //}
 }
 
 /**

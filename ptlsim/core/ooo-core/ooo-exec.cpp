@@ -26,7 +26,7 @@
 
 #ifndef ENABLE_LOGGING
 #undef logable
-#define logable(level) (0)
+#define logable(level) (1)
 #endif
 
 /* This will disable issue of load/store if any store is pending */
@@ -2000,7 +2000,7 @@ rob_cont:
         thread.thread_stats.dcache.dtlb_latency[delay]++;
 
         if(logable(6)) {
-            ptl_logfile << "Finalizing dtlb miss rob ", *this, " virtaddr: ", (void*)origvirt, endl;
+            ptl_logfile << "Finalizing dtlb miss rob ", *this, " virtaddr: ", (void*)origvirt, " delay: ", delay, endl;
         }
         PageFaultErrorCode pfec;
         bool st = isstore(uop.opcode);
@@ -2061,28 +2061,32 @@ rob_cont:
         goto rob_cont;
     }
 
-    if(!core.memoryHierarchy->is_cache_available(core.get_coreid(), threadid, false)){
-        /* Cache queue is full.. so simply skip this iteration */
-        return;
-    }
-    Memory::MemoryRequest *request = core.memoryHierarchy->get_free_request(core.get_coreid());
-    assert(request != NULL);
+	/* adarsh - tlb walk free */
+	//W64 data = thread.ctx.loadphys(pteaddr, false, 0);
+	tlb_walk_level--;
+	tlbwalk();
+    //if(!core.memoryHierarchy->is_cache_available(core.get_coreid(), threadid, false)){
+    //    /* Cache queue is full.. so simply skip this iteration */
+    //    return;
+    //}
+    //Memory::MemoryRequest *request = core.memoryHierarchy->get_free_request(core.get_coreid());
+    //assert(request != NULL);
 
-    request->init(core.get_coreid(), threadid, pteaddr, idx, sim_cycle,
-            false, uop.rip.rip, uop.uuid, Memory::MEMORY_OP_READ, false);
-    request->set_coreSignal(&core.dcache_signal);
+    //request->init(core.get_coreid(), threadid, pteaddr, idx, sim_cycle,
+    //        false, uop.rip.rip, uop.uuid, Memory::MEMORY_OP_READ, false);
+    //request->set_coreSignal(&core.dcache_signal);
 
-    lsq->physaddr = pteaddr >> 3;
+    //lsq->physaddr = pteaddr >> 3;
 
-    bool L1_hit = core.memoryHierarchy->access_cache(request);
+    //bool L1_hit = core.memoryHierarchy->access_cache(request);
 
-    if(L1_hit) {
-        tlb_walk_level--;
-    } else {
-        cycles_left = 0;
-        changestate(thread.rob_cache_miss_list);
+    //if(L1_hit) {
+    //    tlb_walk_level--;
+    //} else {
+    //    cycles_left = 0;
+    //    changestate(thread.rob_cache_miss_list);
 
-    }
+    //}
 }
 
 /**
