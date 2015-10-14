@@ -532,6 +532,7 @@ namespace OOO_CORE_MODEL {
         byte entry_valid:1, load_store_second_phase:1, all_consumers_off_bypass:1, dest_renamed_before_writeback:1, no_branches_between_renamings:1, transient:1, lock_acquired:1, issued:1;
         byte annul_flag;
         byte tlb_walk_level;
+        bool page_2m;
 
         int index() const { return idx; }
         void validate() { entry_valid = true; }
@@ -945,8 +946,72 @@ namespace OOO_CORE_MODEL {
         return tlb.print(os);
       }
 
-    typedef TranslationLookasideBuffer<0, DTLB_SIZE> DTLB;
-    typedef TranslationLookasideBuffer<1, ITLB_SIZE> ITLB;
+    typedef TranslationLookasideBuffer<0, L14K_DTLB_SIZE> L14K_DTLB;
+    typedef TranslationLookasideBuffer<1, L14K_ITLB_SIZE> L14K_ITLB;
+    
+     /*
+      * TLB class with one-hot semantics. 27 bit tags are required since
+      * virtual addresses are 48 bits, so 48 - 21 (2^21 bytes per 2M page)
+      * is 27 bits.
+      */
+
+    template <int tlbid, int size>
+      struct TranslationLookasideBuffer_2M: public FullyAssociativeTagsNbitOneHot<size, 31> {
+        typedef FullyAssociativeTagsNbitOneHot<size, 31> base_t;
+        TranslationLookasideBuffer_2M(): base_t() { }
+
+        void reset() {
+          base_t::reset();
+        }
+
+        /* Get the 31-bit TLB tag (27 bit virtual page ID plus 4 bit threadid) */
+        static W64 tagof(W64 addr, W64 threadid) {
+          return bits(addr, 21, 27) | (threadid << 27);
+        }
+
+        bool probe(W64 addr, W8 threadid = 0) {
+          W64 tag = tagof(addr, threadid);
+          return (base_t::probe(tag) >= 0);
+        }
+
+        bool insert(W64 addr, W8 threadid = 0) {
+          addr = floor(addr, PAGE_SIZE);
+          W64 tag = tagof(addr, threadid);
+          W64 oldtag = 0;
+          int way = base_t::select(tag, oldtag);
+          if (logable(6)) {
+            ptl_logfile << "TLB insertion of virt page ", (void*)(Waddr)addr, " (virt addr ",
+                        (void*)(Waddr)(addr), ") into way ", way, ": ",
+                        ((oldtag != tag) ? "evicted old entry" : "already present"), endl;
+          }
+          return (oldtag != tag);
+        }
+
+        int flush_all() {
+          reset();
+          return size;
+        }
+
+        int flush_thread(W64 threadid) {
+          W64 tag = threadid << 27;
+          W64 tagmask = 0xfULL << 27;
+          bitvec<size> slotmask = base_t::masked_match(tag, tagmask);
+          int n = slotmask.popcount();
+          base_t::masked_invalidate(slotmask);
+          return n;
+        }
+
+        int flush_virt(Waddr virtaddr, W64 threadid) {
+          return invalidate(tagof(virtaddr, threadid));
+        }
+      };
+
+    template <int tlbid, int size>
+      static inline ostream& operator <<(ostream& os, const TranslationLookasideBuffer_2M<tlbid, size>& tlb) {
+        return tlb.print(os);
+      }
+	
+	typedef TranslationLookasideBuffer_2M<2, L12M_DTLB_SIZE> L12M_DTLB;
 
     /**
      * @brief represent a OOO  thread in SMT core.
@@ -995,8 +1060,9 @@ namespace OOO_CORE_MODEL {
         RegisterRenameTable specrrt;
         RegisterRenameTable commitrrt;
 
-        DTLB dtlb;
-        ITLB itlb;
+        L14K_DTLB l14k_dtlb;
+        L14K_ITLB l14k_itlb;
+        L12M_DTLB l12m_dtlb;
         void setupTLB();
         W64 itlb_miss_init_cycle;
         bool in_tlb_walk;
@@ -1009,6 +1075,7 @@ namespace OOO_CORE_MODEL {
         bool waiting_for_icache_fill;
         Waddr waiting_for_icache_fill_physaddr;
         byte itlb_walk_level;
+        bool page_2m;
         bool probeitlb(Waddr fetchrip);
         void itlbwalk();
 

@@ -990,6 +990,7 @@ struct Context: public CPUX86State {
   Context() : invalid_reg(-1), reg_zero(0), reg_ctx((Waddr)this) { }
 
   W64 virt_to_pte_phys_addr(Waddr virtaddr, byte& level);
+  W64 virt_to_pte_phys_addr(Waddr virtaddr, byte& level, bool& page_2m);
 
   void update_mode_count();
   bool check_events() const;

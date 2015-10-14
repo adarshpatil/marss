@@ -71,12 +71,16 @@
 #define OOO_COMMIT_WIDTH 4
 #endif
 
-#ifndef OOO_ITLB_SIZE
-#define OOO_ITLB_SIZE 576
+#ifndef OOO_L14K_ITLB_SIZE
+#define OOO_L14K_ITLB_SIZE 64
 #endif
 
-#ifndef OOO_DTLB_SIZE
-#define OOO_DTLB_SIZE 576
+#ifndef OOO_L14K_DTLB_SIZE
+#define OOO_L14K_DTLB_SIZE 64
+#endif
+
+#ifndef OOO_L12M_DTLB_SIZE
+#define OOO_L12M_DTLB_SIZE 8
 #endif
 
 /* functional units */
@@ -250,8 +254,9 @@ namespace OOO_CORE_MODEL {
 #endif
 
     /* TLBs */
-    const int ITLB_SIZE = OOO_ITLB_SIZE;
-    const int DTLB_SIZE = OOO_DTLB_SIZE;
+    const int L14K_ITLB_SIZE = OOO_L14K_ITLB_SIZE;
+    const int L14K_DTLB_SIZE = OOO_L14K_DTLB_SIZE;
+	const int L12M_DTLB_SIZE = OOO_L12M_DTLB_SIZE;
 
     /* How many bytes of x86 code to fetch into decode buffer at once */
     static const int ICACHE_FETCH_GRANULARITY = 16;

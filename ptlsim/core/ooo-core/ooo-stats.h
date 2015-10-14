@@ -504,7 +504,8 @@ namespace OOO_CORE_MODEL {
                 {}
             };
 
-            tlb_stat dtlb;
+            tlb_stat l14k_dtlb;
+            tlb_stat l12m_dtlb;
             tlb_stat itlb;
 
             StatArray<W64, 1001> dtlb_latency;
@@ -515,7 +516,8 @@ namespace OOO_CORE_MODEL {
                   , load("load", this)
                   , store("store", this)
                   , fence(this)
-                  , dtlb("dtlb", this)
+                  , l14k_dtlb("l14k_dtlb", this)
+                  , l12m_dtlb("l12m_dtlb", this)
                   , itlb("itlb", this)
                   , dtlb_latency("dtlb_latency", this)
                   , itlb_latency("itlb_latency", this)

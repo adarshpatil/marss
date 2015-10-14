@@ -188,10 +188,13 @@ void ThreadContext::setupTLB() {
         W64 dtlb_addr = ctx.tlb_table[!ctx.kernel_mode][i].addr_read;
         W64 itlb_addr = ctx.tlb_table[!ctx.kernel_mode][i].addr_code;
         if(dtlb_addr != (W64)-1) {
-            dtlb.insert(dtlb_addr);
+            l14k_dtlb.insert(dtlb_addr);
         }
         if(itlb_addr != (W64)-1) {
-            itlb.insert(itlb_addr);
+            l14k_itlb.insert(itlb_addr);
+        }
+        if(dtlb_addr != (W64)-1) {
+            l12m_dtlb.insert(dtlb_addr);
         }
     }
 }
@@ -1150,8 +1153,9 @@ void ThreadContext::dump_smt_state(ostream& os) {
     print_rename_tables(os);
     print_rob(os);
     print_lsq(os);
-    os << "ITLB: \n", itlb, endl;
-    os << "DTLB: \n", dtlb, endl;
+    os << "L14K_ITLB: \n", l14k_itlb, endl;
+    os << "L14K_DTLB: \n", l14k_dtlb, endl;
+	os << "L12M_DTLB: \n", l12m_dtlb, endl;
     os << flush;
 }
 
@@ -1563,8 +1567,9 @@ ostream& OOO_CORE_MODEL::operator <<(ostream& os, const PhysicalRegisterOperandI
 
 void OooCore::flush_tlb(Context& ctx) {
     foreach(i, threadcount) {
-        threads[i]->dtlb.flush_all();
-        threads[i]->itlb.flush_all();
+        threads[i]->l14k_dtlb.flush_all();
+        threads[i]->l14k_itlb.flush_all();
+		threads[i]->l12m_dtlb.flush_all();
     }
 }
 
@@ -1625,8 +1630,9 @@ void OooCore::dump_configuration(YAML::Emitter &out) const
 			threadcount);
 	YAML_KEY_VAL(out, "fetch_q_size", FETCH_QUEUE_SIZE);
 	YAML_KEY_VAL(out, "frontend_stages", FRONTEND_STAGES);
-	YAML_KEY_VAL(out, "itlb_size", ITLB_SIZE);
-	YAML_KEY_VAL(out, "dtlb_size", DTLB_SIZE);
+	YAML_KEY_VAL(out, "l14k_itlb_size", L14K_ITLB_SIZE);
+	YAML_KEY_VAL(out, "l14K_dtlb_size", L14K_DTLB_SIZE);
+	YAML_KEY_VAL(out, "l12m_dtlb_size", L12M_DTLB_SIZE);
 
 	YAML_KEY_VAL(out, "total_FUs", (ALU_FU_COUNT + FPU_FU_COUNT +
 				LOAD_FU_COUNT + STORE_FU_COUNT));

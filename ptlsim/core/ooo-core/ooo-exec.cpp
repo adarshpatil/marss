@@ -1894,7 +1894,7 @@ bool ReorderBufferEntry::probetlb(LoadStoreQueueEntry& state, Waddr& origaddr, W
 
 #ifndef DISABLE_TLB
     /* First check if its a TLB hit or miss */
-    if unlikely (exception != 0 || !thread.dtlb.probe(origaddr, threadid)) {
+    if unlikely (exception != 0 || !(thread.l14k_dtlb.probe(origaddr, threadid) || thread.l12m_dtlb.probe(origaddr, threadid))) {
 
         if(logable(6)) {
             ptl_logfile << "dtlb miss origaddr: ", (void*)origaddr, endl;
@@ -1905,7 +1905,8 @@ bool ReorderBufferEntry::probetlb(LoadStoreQueueEntry& state, Waddr& origaddr, W
         changestate(thread.rob_tlb_miss_list);
         tlb_miss_init_cycle = sim_cycle;
         tlb_walk_level = thread.ctx.page_table_level_count();
-        thread.thread_stats.dcache.dtlb.misses++;
+        thread.thread_stats.dcache.l14k_dtlb.misses++;
+        thread.thread_stats.dcache.l12m_dtlb.misses++;
 
         return false;
     }
@@ -1915,7 +1916,12 @@ bool ReorderBufferEntry::probetlb(LoadStoreQueueEntry& state, Waddr& origaddr, W
      * If not then set up the QEMU's TLB entry without any additional delay
      * in pipeline.
      */
-    thread.thread_stats.dcache.dtlb.hits++;
+    if( thread.l14k_dtlb.probe(origaddr, threadid) ){
+	    thread.thread_stats.dcache.l14k_dtlb.hits++;
+	}
+    else {
+    	thread.thread_stats.dcache.l12m_dtlb.hits++;
+    }
 #endif
 
     if unlikely (exception) {
@@ -2014,7 +2020,7 @@ rob_cont:
         if unlikely (exception) {
 
             /*adarsh: pagefault stats*/
-            thread.thread_stats.dcache.dtlb.pagefault++;
+            thread.thread_stats.dcache.l14k_dtlb.pagefault++;
 
             /* Check if the page fault can be handled without causing exception */
             if(exception == EXCEPTION_PageFaultOnWrite || exception == EXCEPTION_PageFaultOnRead) {
@@ -2043,7 +2049,13 @@ rob_cont:
             assert(exception == 0);
         }
 
-        thread.dtlb.insert(origvirt, threadid);
+		// Check IF 2M page and insert into 2M TLB
+		if( page_2m  ) {
+	        thread.l12m_dtlb.insert(origvirt, threadid);
+	    }
+	    else {
+			thread.l14k_dtlb.insert(origvirt, threadid);
+	    }
         thread.in_tlb_walk = 0;
 
         if(logable(10)) {
@@ -2055,7 +2067,7 @@ rob_cont:
         return;
     }
 
-    W64 pteaddr = thread.ctx.virt_to_pte_phys_addr(virtaddr, tlb_walk_level);
+    W64 pteaddr = thread.ctx.virt_to_pte_phys_addr(virtaddr, tlb_walk_level, page_2m);
 
     if(pteaddr == (W64)-1) {
         goto rob_cont;
@@ -2063,30 +2075,31 @@ rob_cont:
 
 	/* adarsh - tlb walk free */
 	//W64 data = thread.ctx.loadphys(pteaddr, false, 0);
-	tlb_walk_level--;
-	tlbwalk();
-    //if(!core.memoryHierarchy->is_cache_available(core.get_coreid(), threadid, false)){
-    //    /* Cache queue is full.. so simply skip this iteration */
-    //    return;
-    //}
-    //Memory::MemoryRequest *request = core.memoryHierarchy->get_free_request(core.get_coreid());
-    //assert(request != NULL);
+	//tlb_walk_level--;
+	//tlbwalk();
 
-    //request->init(core.get_coreid(), threadid, pteaddr, idx, sim_cycle,
-    //        false, uop.rip.rip, uop.uuid, Memory::MEMORY_OP_READ, false);
-    //request->set_coreSignal(&core.dcache_signal);
+    if(!core.memoryHierarchy->is_cache_available(core.get_coreid(), threadid, false)){
+        /* Cache queue is full.. so simply skip this iteration */
+        return;
+    }
+    Memory::MemoryRequest *request = core.memoryHierarchy->get_free_request(core.get_coreid());
+    assert(request != NULL);
 
-    //lsq->physaddr = pteaddr >> 3;
+    request->init(core.get_coreid(), threadid, pteaddr, idx, sim_cycle,
+            false, uop.rip.rip, uop.uuid, Memory::MEMORY_OP_READ, false);
+    request->set_coreSignal(&core.dcache_signal);
 
-    //bool L1_hit = core.memoryHierarchy->access_cache(request);
+    lsq->physaddr = pteaddr >> 3;
 
-    //if(L1_hit) {
-    //    tlb_walk_level--;
-    //} else {
-    //    cycles_left = 0;
-    //    changestate(thread.rob_cache_miss_list);
+    bool L1_hit = core.memoryHierarchy->access_cache(request);
 
-    //}
+    if(L1_hit) {
+        tlb_walk_level--;
+    } else {
+        cycles_left = 0;
+        changestate(thread.rob_cache_miss_list);
+
+    }
 }
 
 /**
