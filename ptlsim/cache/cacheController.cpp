@@ -190,7 +190,6 @@ bool CacheController::handle_interconnect_cb(void *arg)
 		if(pendingRequests_.isFull()) {
 			memoryHierarchy_->set_controller_full(this, true);
 		}
-c
 		if(queueEntry == NULL) {
 			return false;
 		}
