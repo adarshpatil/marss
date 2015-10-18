@@ -551,6 +551,16 @@ bool CacheController::cache_access_cb(void *arg)
 		Signal *signal = NULL;
 		int delay;
 		if(hit) {
+			if(queueEntry->request->is_tlbreq() != 0) {
+				if(queueEntry->request->is_tlbreq() == 4)
+					N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.tlb_l4, ++, kernel_req);
+				if(queueEntry->request->is_tlbreq() == 3)
+					N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.tlb_l3, ++, kernel_req);
+				if(queueEntry->request->is_tlbreq() == 2)
+					N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.tlb_l2, ++, kernel_req);
+				if(queueEntry->request->is_tlbreq() == 1)
+					N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.tlb_l1, ++, kernel_req);
+			}
 			if(type == MEMORY_OP_READ ||
 					type == MEMORY_OP_WRITE) {
 				signal = &cacheHit_;

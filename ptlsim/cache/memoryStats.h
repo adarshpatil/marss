@@ -65,11 +65,18 @@ struct BaseCacheStats : public Statable
                 {
                     StatObj<W64> hit;
                     StatObj<W64> forward;
-
+                    StatObj<W64> tlb_l4;
+                    StatObj<W64> tlb_l3;
+                    StatObj<W64> tlb_l2;
+                    StatObj<W64> tlb_l1;
                     hit_sub(const char *name, Statable *parent)
                         : Statable(name, parent)
                           , hit("hit", this)
                           , forward("forward", this)
+                          , tlb_l4("tlb_l4", this)
+                          , tlb_l3("tlb_l3", this)
+                          , tlb_l2("tlb_l2", this)
+                          , tlb_l1("tlb_l1", this)
                     {}
                 };
 

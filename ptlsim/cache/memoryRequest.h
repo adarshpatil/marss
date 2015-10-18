@@ -63,6 +63,7 @@ class MemoryRequest: public selfqueuelink
 			cycles_ = 0;
 			ownerRIP_ = 0;
 			refCounter_ = 0; // or maybe 1
+			isTLBreq_ = 0; // 0 if not from TLB miss; else page walk level
 			opType_ = MEMORY_OP_READ;
 			isData_ = 0;
 			history = new stringbuf();
@@ -87,6 +88,17 @@ class MemoryRequest: public selfqueuelink
 				W64 ownerUUID,
 				OP_TYPE opType);
 
+		void init(W8 coreId,
+				W8 threadId,
+				W64 physicalAddress,
+				int robId,
+				W64 cycles,
+				bool isInstruction,
+				W64 ownerRIP,
+				W64 ownerUUID,
+				OP_TYPE opType,
+				int isTLBreq);
+
 		bool is_same(W8 coreid,
 				W8 threadid,
 				int robid,
@@ -108,7 +120,9 @@ class MemoryRequest: public selfqueuelink
 		bool is_instruction() {
 			return !isData_;
 		}
-
+		int is_tlbreq() {
+			return isTLBreq_;
+		}
 		W64 get_physical_address() { return physicalAddress_; }
 		void set_physical_address(W64 addr) { physicalAddress_ = addr; }
 
@@ -178,6 +192,7 @@ class MemoryRequest: public selfqueuelink
 		W64 ownerUUID_;
 		int refCounter_;
 		OP_TYPE opType_;
+		int isTLBreq_;
 		stringbuf *history;
         Signal *coreSignal_;
 

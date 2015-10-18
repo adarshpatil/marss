@@ -60,6 +60,36 @@ void MemoryRequest::init(W8 coreId,
 	ownerRIP_ = ownerRIP;
 	ownerUUID_ = ownerUUID;
 	refCounter_ = 0; // or maybe 1
+	isTLBreq_ = 0;
+	opType_ = opType;
+	isData_ = !isInstruction;
+
+	if(history) delete history;
+	history = new stringbuf();
+
+	memdebug("Init ", *this, endl);
+}
+
+void MemoryRequest::init(W8 coreId,
+		W8 threadId,
+		W64 physicalAddress,
+		int robId,
+		W64 cycles,
+		bool isInstruction,
+		W64 ownerRIP,
+		W64 ownerUUID,
+		OP_TYPE opType,
+		int isTLBreq)
+{
+	coreId_ = coreId;
+	threadId_ = threadId;
+	physicalAddress_ = physicalAddress;
+	robId_ = robId;
+	cycles_ = cycles;
+	ownerRIP_ = ownerRIP;
+	ownerUUID_ = ownerUUID;
+	refCounter_ = 0; // or maybe 1
+	isTLBreq_ = isTLBreq;
 	opType_ = opType;
 	isData_ = !isInstruction;
 

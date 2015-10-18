@@ -2067,7 +2067,7 @@ rob_cont:
     assert(request != NULL);
 
     request->init(core.get_coreid(), threadid, pteaddr, idx, sim_cycle,
-            false, uop.rip.rip, uop.uuid, Memory::MEMORY_OP_READ);
+            false, uop.rip.rip, uop.uuid, Memory::MEMORY_OP_READ, tlb_walk_level);
     request->set_coreSignal(&core.dcache_signal);
 
     lsq->physaddr = pteaddr >> 3;
