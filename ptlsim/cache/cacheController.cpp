@@ -190,7 +190,7 @@ bool CacheController::handle_interconnect_cb(void *arg)
 		if(pendingRequests_.isFull()) {
 			memoryHierarchy_->set_controller_full(this, true);
 		}
-
+c
 		if(queueEntry == NULL) {
 			return false;
 		}
@@ -551,16 +551,6 @@ bool CacheController::cache_access_cb(void *arg)
 		Signal *signal = NULL;
 		int delay;
 		if(hit) {
-			if(queueEntry->request->is_tlbreq() != 0) {
-				if(queueEntry->request->is_tlbreq() == 4)
-					N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.tlb_l4, ++, kernel_req);
-				if(queueEntry->request->is_tlbreq() == 3)
-					N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.tlb_l3, ++, kernel_req);
-				if(queueEntry->request->is_tlbreq() == 2)
-					N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.tlb_l2, ++, kernel_req);
-				if(queueEntry->request->is_tlbreq() == 1)
-					N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.tlb_l1, ++, kernel_req);
-			}
 			if(type == MEMORY_OP_READ ||
 					type == MEMORY_OP_WRITE) {
 				signal = &cacheHit_;
@@ -574,7 +564,16 @@ bool CacheController::cache_access_cb(void *arg)
 					N_STAT_UPDATE(new_stats.cpurequest.count.hit.write.hit, ++,
 							kernel_req);
 				}
-
+				if(queueEntry->request->is_tlbreq() != 0) {
+					if(queueEntry->request->is_tlbreq() == 4)
+						N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.tlb_l4, ++, kernel_req);
+					if(queueEntry->request->is_tlbreq() == 3)
+						N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.tlb_l3, ++, kernel_req);
+					if(queueEntry->request->is_tlbreq() == 2)
+						N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.tlb_l2, ++, kernel_req);
+					if(queueEntry->request->is_tlbreq() == 1)
+						N_STAT_UPDATE(new_stats.cpurequest.count.hit.read.tlb_l1, ++, kernel_req);
+				}
                 /*
                  * Create a new memory request with
                  * opration type MEMORY_OP_UPDATE and
@@ -629,6 +628,16 @@ bool CacheController::cache_access_cb(void *arg)
 				} else if(type == MEMORY_OP_WRITE) {
 					N_STAT_UPDATE(new_stats.cpurequest.count.miss.write, ++,
 							kernel_req);
+				}
+				if(queueEntry->request->is_tlbreq() != 0) {
+					if(queueEntry->request->is_tlbreq() == 4)
+						N_STAT_UPDATE(new_stats.cpurequest.count.miss.tlb_l4, ++, kernel_req);
+					if(queueEntry->request->is_tlbreq() == 3)
+						N_STAT_UPDATE(new_stats.cpurequest.count.miss.tlb_l3, ++, kernel_req);
+					if(queueEntry->request->is_tlbreq() == 2)
+						N_STAT_UPDATE(new_stats.cpurequest.count.miss.tlb_l2, ++, kernel_req);
+					if(queueEntry->request->is_tlbreq() == 1)
+						N_STAT_UPDATE(new_stats.cpurequest.count.miss.tlb_l1, ++, kernel_req);
 				}
 
 				if(!queueEntry->prefetch && type == MEMORY_OP_READ)

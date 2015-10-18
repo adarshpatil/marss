@@ -94,11 +94,19 @@ struct BaseCacheStats : public Statable
             {
                 StatObj<W64> read;
                 StatObj<W64> write;
+                StatObj<W64> tlb_l4;
+                StatObj<W64> tlb_l3;
+                StatObj<W64> tlb_l2;
+                StatObj<W64> tlb_l1;
 
                 miss(Statable *parent)
                     : Statable("miss", parent)
                       , read("read", this)
                       , write("write", this)
+                      , tlb_l4("tlb_l4", this)
+                      , tlb_l3("tlb_l3", this)
+                      , tlb_l2("tlb_l2", this)
+                      , tlb_l1("tlb_l1", this)
                 {}
             } miss;
 
